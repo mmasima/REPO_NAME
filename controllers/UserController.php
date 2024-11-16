@@ -8,25 +8,13 @@ class UserController {
         $this->userService = $userService;
     }
 
-    public function signUp($firstName, $lastName, $email, $password) {
-        if ($this->userService->findUserByEmail($email)) {
-            echo "Email already exists.";
-            return;
-        }
-        $this->userService->createUser($firstName, $lastName, $email, $password);
-        header("Location: index.php");
-        exit();
+    public function signup(string $username, string $email, string $password): bool
+    {
+        return $this->userService->signup($username, $email, $password);
     }
 
-    public function signIn($email, $password) {
-        $user = $this->userService->findUserByEmail($email);
-        if ($user && password_verify($password, $user['password'])) {
-            session_start();
-            $_SESSION['email'] = $user['email'];
-            header("Location: homepage.php");
-            exit();
-        } else {
-            echo "Incorrect email or password";
-        }
+    public function login(string $email, string $password): ?array
+    {
+        return $this->userService->login($email, $password);
     }
 }

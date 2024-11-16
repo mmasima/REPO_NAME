@@ -1,53 +1,77 @@
 <?php
-require_once 'config/DatabaseConnection.php';
-require_once 'services/HouseService.php';
-require_once 'services/ImageService.php';
-require_once 'services/UserService.php';
+require_once(__DIR__ . '/config/DatabaseConnection.php');
+require_once(__DIR__ . '/repositories\UserRepository.php');
+require_once(__DIR__ . '/api/Response.php');
 
-$dbConnection = new DatabaseConnection();
-$houseService = new HouseService($dbConnection);
-$imageService = new ImageService($dbConnection);
-$userService = new UserService($dbConnection);
+// Enable CORS
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-header("Content-Type: application/json");
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit(0);
+}
 
-switch ($_SERVER['REQUEST_METHOD']) {
-    case 'POST':
-        $data = json_decode(file_get_contents("php://input"), true);
-        
-        if ($_GET['action'] === 'signup') {
-            $success = $userService->signup($data['username'], $data['email'], $data['password']);
-            echo json_encode(["success" => $success]);
-        
-        } elseif ($_GET['action'] === 'login') {
-            $user = $userService->login($data['email'], $data['password']);
-            if ($user) {
-                echo json_encode(["user" => $user]);
-            } else {
-                http_response_code(401);
-                echo json_encode(["error" => "Invalid credentials"]);
-            }
-        
-        } elseif ($_GET['action'] === 'addHouse') {
-            $houseId = $houseService->addHouse($data['address'], $data['description'], $data['geolocation']);
-            echo json_encode(["houseId" => $houseId]);
-        
-        } elseif ($_GET['action'] === 'addImage') {
-            $success = $imageService->addImage($data['houseId'], $data['url'], $data['description']);
-            echo json_encode(["success" => $success]);
+// Initialize database connection
+$db = (new DatabaseConnection());
+$userRepository = new UserRepository($db->getConnection());
+
+// Get request details
+$request_uri = $_SERVER['REQUEST_URI'];
+$method = $_SERVER['REQUEST_METHOD'];
+
+// Parse the path
+$path = parse_url($request_uri, PHP_URL_PATH);
+$path_parts = explode('/', trim($path, '/'));
+
+// Get the endpoint (last part of the path)
+$endpoint = end($path_parts);
+
+// Get JSON request body
+$json = file_get_contents('php://input');
+$data = json_decode($json, true);
+
+// Routes
+switch ($endpoint) {
+    case 'register':
+        if ($method !== 'POST') {
+            Response::json(['error' => 'Method not allowed'], 405);
+        }
+
+        if (!isset($data['username']) || !isset($data['email']) || !isset($data['password'])) {
+            Response::json(['error' => 'Missing required fields'], 400);
+        }
+
+        $user = $userRepository->create($data);
+        if ($user) {
+            Response::json(['message' => 'User created successfully', 'user' => $user], 201);
+        } else {
+            Response::json(['error' => 'Failed to create user'], 500);
         }
         break;
 
-    case 'DELETE':
-        parse_str(file_get_contents("php://input"), $data);
-        
-        if ($_GET['action'] === 'deleteHouse') {
-            $success = $houseService->deleteHouse($data['houseId']);
-            echo json_encode(["success" => $success]);
-        
-        } elseif ($_GET['action'] === 'deleteImage') {
-            $success = $imageService->deleteImage($data['imageId']);
-            echo json_encode(["success" => $success]);
+    case 'login':
+        if ($method !== 'POST') {
+            Response::json(['error' => 'Method not allowed'], 405);
         }
+
+        if (!isset($data['email']) || !isset($data['password'])) {
+            Response::json(['error' => 'Missing credentials'], 400);
+        }
+
+        $user = $userRepository->authenticate($data['email'], $data['password']);
+        if ($user) {
+            Response::json(['message' => 'Login successful', 'user' => $user]);
+        } else {
+            Response::json(['error' => 'Invalid credentials'], 401);
+        }
+        break;
+
+    default:
+        Response::json([
+            'error' => 'Not found', 
+            'path' => $path,
+            'endpoint' => $endpoint
+        ], 404);
         break;
 }
