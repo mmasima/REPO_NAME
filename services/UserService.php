@@ -19,14 +19,12 @@ class UserService implements IUserService
             return false;
         }
     
-        // Hash password
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
         if ($hashedPassword === false) {
             error_log("Signup failed: Failed to hash password.");
             return false;
         }
 
-        // Check for duplicate email or username
         $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? OR username = ?");
         if (!$stmt) {
             error_log("Signup failed: Failed to prepare SELECT query: " . $conn->error);
@@ -36,7 +34,6 @@ class UserService implements IUserService
         $stmt->execute();
         $result = $stmt->get_result();
         
-        // Check if user already exists
         if ($result->num_rows > 0) {
             error_log("Signup failed: User with email '$email' or username '$username' already exists.");
             $stmt->close();
@@ -46,7 +43,6 @@ class UserService implements IUserService
 
         $stmt->close();
     
-        // Insert new user
         $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
         if (!$stmt) {
             error_log("Signup failed: Failed to prepare INSERT query: " . $conn->error);
@@ -63,7 +59,6 @@ class UserService implements IUserService
         $stmt->close();
         $conn->close();
 
-        // Success, user created
         error_log("Signup successful: User '$username' with email '$email' created.");
         return true;
     }
@@ -77,7 +72,6 @@ class UserService implements IUserService
             return null;
         }
 
-        // Prepare and execute query to find user by email
         $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE email = ?");
         if (!$stmt) {
             error_log("Login failed: Failed to prepare SELECT query: " . $conn->error);
@@ -97,7 +91,6 @@ class UserService implements IUserService
             return null;
         }
 
-        // Verify password
         if (!password_verify($password, $user['password'])) {
             error_log("Login failed: Invalid password for user '$email'.");
             echo json_encode(["error" => "Invalid credentials"]);
@@ -106,7 +99,6 @@ class UserService implements IUserService
             return null;
         }
 
-        // Successful login, start session
         session_start();
         $_SESSION['user'] = [
             'id' => $user['id'],

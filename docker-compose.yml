@@ -20,7 +20,7 @@ services:
     - "13306:3306"
 
     environment:
-      MYSQL_DATABASE: database_name
+      MYSQL_DATABASE: insurance_claim
       MYSQL_ROOT_PASSWORD: 123qwe
       MYSQL_USER: someuser
       MYSQL_PASSWORD: 123qwe

@@ -29,8 +29,6 @@ class UserRepository implements IUserRepository {
     
             $result = $stmt->execute();
 
-            var_dump($result);
-
             return [
                 'id' => $stmt->insert_id,
                 'username' => $username,
@@ -72,7 +70,6 @@ class UserRepository implements IUserRepository {
         $stmt->execute();
         
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        var_dump($result[0]['email']);
         $user = $result;
 
         if ($user && password_verify($password, $user[0]['password'])) {

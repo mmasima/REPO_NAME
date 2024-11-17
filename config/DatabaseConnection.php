@@ -69,9 +69,6 @@ class DatabaseConnection implements IDatabaseConnection {
     }
 
     private function initializeDatabase() {
-
-
-        // $this->connection->setup_db_query('CREATE DATABASE IF NOT EXISTS $dbName');
         $this->setup_db_query('
         CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -79,14 +76,7 @@ class DatabaseConnection implements IDatabaseConnection {
                 email VARCHAR(255) NOT NULL,
                 password VARCHAR(255) NOT NULL
             )');
-        // $this->conn->query("
-        //     CREATE TABLE IF NOT EXISTS users (
-        //         id INT AUTO_INCREMENT PRIMARY KEY,
-        //         username VARCHAR(255) NOT NULL,
-        //         email VARCHAR(255) NOT NULL,
-        //         password VARCHAR(255) NOT NULL
-        //     )
-        // ");
+
 
         $this->setup_db_query("
             CREATE TABLE IF NOT EXISTS houses (

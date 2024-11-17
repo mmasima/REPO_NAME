@@ -1,20 +1,36 @@
 <?php
-require_once 'UserController.php';
+require_once(__DIR__ . '/controllers/HouseController.php');
+require_once(__DIR__ . '/api/Response.php');
 
-function route($uri, $method) {
-    $controller = new UserController();
+$houseController = new HouseController();
 
-    switch (true) {
-        case $uri === '/signup' && $method === 'POST':
-            $controller->signup();
-            break;
+switch ($endpoint) {
+    case 'add-house':
+        if ($method !== 'POST') {
+            Response::json(['error' => 'Method not allowed'], 405);
+        }
+        $houseController->addHouse($data);
+        break;
 
-        case $uri === '/login' && $method === 'POST':
-            $controller->login();
-            break;
+    case 'delete-house':
+        if ($method !== 'DELETE') {
+            Response::json(['error' => 'Method not allowed'], 405);
+        }
+        if (!isset($path_parts[2])) {
+            Response::json(['error' => 'House ID is required'], 400);
+        }
+        $houseId = intval($path_parts[2]);
+        $houseController->deleteHouse($houseId);
+        break;
 
-        default:
-            http_response_code(404);
-            echo json_encode(['message' => 'Not Found']);
-    }
+    case 'get-houses':
+        if ($method !== 'GET') {
+            Response::json(['error' => 'Method not allowed'], 405);
+        }
+        $houseController->getAllHouses();
+        break;
+
+    default:
+        Response::json(['error' => 'Not found'], 404);
+        break;
 }
